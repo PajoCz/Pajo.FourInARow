@@ -14,22 +14,27 @@ namespace Pajo.FourInARow.Client.Console
             while((key = System.Console.ReadKey().Key) != ConsoleKey.Escape)
             {
                 //System.Console.WriteLine($"Key: {key}");
+                bool added = false;
                 if (key == ConsoleKey.NumPad1 || key == ConsoleKey.D1)
-                    _Board.AddToColumn(1, _PlayerRound);
+                    added = _Board.AddToColumn(1, _PlayerRound);
                 else if (key == ConsoleKey.NumPad2 || key == ConsoleKey.D2)
-                    _Board.AddToColumn(2, _PlayerRound);
+                    added = _Board.AddToColumn(2, _PlayerRound);
                 else if (key == ConsoleKey.NumPad3 || key == ConsoleKey.D3)
-                    _Board.AddToColumn(3, _PlayerRound);
+                    added = _Board.AddToColumn(3, _PlayerRound);
                 else if (key == ConsoleKey.NumPad4 || key == ConsoleKey.D4)
-                    _Board.AddToColumn(4, _PlayerRound);
+                    added = _Board.AddToColumn(4, _PlayerRound);
                 else if (key == ConsoleKey.NumPad5 || key == ConsoleKey.D5)
-                    _Board.AddToColumn(5, _PlayerRound);
+                    added = _Board.AddToColumn(5, _PlayerRound);
                 else if (key == ConsoleKey.NumPad6 || key == ConsoleKey.D6)
-                    _Board.AddToColumn(6, _PlayerRound);
+                    added = _Board.AddToColumn(6, _PlayerRound);
                 else if (key == ConsoleKey.NumPad7 || key == ConsoleKey.D7)
-                    _Board.AddToColumn(7, _PlayerRound);
-                else continue;
-                
+                    added = _Board.AddToColumn(7, _PlayerRound);
+                if (!added)
+                {
+                    SetPlayerColorAndDrawBoard(_PlayerRound);
+                    continue;
+                }
+
                 SetPlayerColorAndDrawBoard(_PlayerRound == BoardValue.Red ? BoardValue.Yellow : BoardValue.Red);
 
                 var winner = _Board.CheckWinner();
