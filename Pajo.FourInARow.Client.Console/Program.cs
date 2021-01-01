@@ -13,29 +13,31 @@ namespace Pajo.FourInARow.Client.Console
             ConsoleKey key;
             while((key = System.Console.ReadKey().Key) != ConsoleKey.Escape)
             {
-                if (key == ConsoleKey.NumPad1)
+                //System.Console.WriteLine($"Key: {key}");
+                if (key == ConsoleKey.NumPad1 || key == ConsoleKey.D1)
                     _Board.AddToColumn(1, _PlayerRound);
-                else if (key == ConsoleKey.NumPad2)
+                else if (key == ConsoleKey.NumPad2 || key == ConsoleKey.D2)
                     _Board.AddToColumn(2, _PlayerRound);
-                else if (key == ConsoleKey.NumPad3)
+                else if (key == ConsoleKey.NumPad3 || key == ConsoleKey.D3)
                     _Board.AddToColumn(3, _PlayerRound);
-                else if (key == ConsoleKey.NumPad4)
+                else if (key == ConsoleKey.NumPad4 || key == ConsoleKey.D4)
                     _Board.AddToColumn(4, _PlayerRound);
-                else if (key == ConsoleKey.NumPad5)
+                else if (key == ConsoleKey.NumPad5 || key == ConsoleKey.D5)
                     _Board.AddToColumn(5, _PlayerRound);
-                else if (key == ConsoleKey.NumPad6)
+                else if (key == ConsoleKey.NumPad6 || key == ConsoleKey.D6)
                     _Board.AddToColumn(6, _PlayerRound);
-                else if (key == ConsoleKey.NumPad7)
+                else if (key == ConsoleKey.NumPad7 || key == ConsoleKey.D7)
                     _Board.AddToColumn(7, _PlayerRound);
+                else continue;
                 
                 SetPlayerColorAndDrawBoard(_PlayerRound == BoardValue.Red ? BoardValue.Yellow : BoardValue.Red);
 
                 var winner = _Board.CheckWinner();
                 if (winner != BoardValue.Empty)
-                    EndTextAndResetGame($"{winner} is winner. Press ENTER to continue");
+                    EndTextAndResetGame($"{winner} is a winner. Press ENTER to continue");
 
                 if (_Board.EndGameWithoutWinner())
-                    EndTextAndResetGame("End of game without winner. Press ENTER to continue");
+                    EndTextAndResetGame("End of a game without any winner. Press ENTER to continue");
             }
             System.Console.Clear();
         }
