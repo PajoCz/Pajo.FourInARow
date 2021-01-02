@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Pajo.FourInARow.Engine
 {
@@ -31,15 +32,6 @@ namespace Pajo.FourInARow.Engine
             }
         }
 
-        private bool TryGetValue(int p_Row, int p_Column, out BoardValue p_BoardValue)
-        {
-            p_BoardValue = BoardValue.Empty;
-            if (p_Row < 1 || p_Row > RowsCount || p_Column < 1 || p_Column > ColumnsCount)
-                return false;
-            p_BoardValue = _Data[p_Row - 1, p_Column - 1];
-            return true;
-        }
-        
         public BoardValue GetValue(int p_Row, int p_Column)
         {
             return _Data[p_Row - 1, p_Column - 1];
@@ -51,11 +43,19 @@ namespace Pajo.FourInARow.Engine
                 throw new ArgumentOutOfRangeException(nameof(p_Column));
             if (p_Row < 1 || p_Row > RowsCount)
                 throw new ArgumentOutOfRangeException(nameof(p_Row));
-            if (p_Value == BoardValue.Empty)
-                throw new ArgumentOutOfRangeException(nameof(p_Value));
             _Data[p_Row - 1, p_Column - 1] = p_Value;
         }
 
+        public bool CanAddToColumn(int p_Column)
+        {
+            if (p_Column < 1 || p_Column > ColumnsCount)
+                throw new ArgumentOutOfRangeException(nameof(p_Column));
+
+            return GetValue(1, p_Column) == BoardValue.Empty;
+        }
+
+        public Tuple<int, int> LastAddedColumnRow { get; private set; }
+        
         public bool AddToColumn(int p_Column, BoardValue p_Value)
         {
             if (p_Column < 1 || p_Column > ColumnsCount)
@@ -65,7 +65,25 @@ namespace Pajo.FourInARow.Engine
             {
                 if (GetValue(r, p_Column) == BoardValue.Empty)
                 {
+                    LastAddedColumnRow = new Tuple<int, int>(p_Column, r);
                     SetValue(r, p_Column, p_Value);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool RemoveFromColumn(int p_Column)
+        {
+            if (p_Column < 1 || p_Column > ColumnsCount)
+                throw new ArgumentOutOfRangeException(nameof(p_Column));
+
+            for (int r = 1; r <= RowsCount; r++)
+            {
+                if (GetValue(r, p_Column) != BoardValue.Empty)
+                {
+                    SetValue(r, p_Column, BoardValue.Empty);
                     return true;
                 }
             }
@@ -87,86 +105,61 @@ namespace Pajo.FourInARow.Engine
 
         public BoardValue CheckWinner()
         {
-            //Check columns |
-            for (int c = 1; c <= ColumnsCount; c++)
+            for (var c = 1; c <= ColumnsCount; c++)
+            for (var r = 1; r <= RowsCount; r++)
             {
-                List<BoardValue> data = new List<BoardValue>(RowsCount);
-                for(int r = 1; r <= RowsCount; r++)
-                    data.Add(GetValue(r, c));
-                var winner = Winner(data);
-                if (winner != BoardValue.Empty)
-                    return winner;
-            }
-            //Check rows -
-            for(int r = 1; r <= RowsCount; r++)
-            {
-                List<BoardValue> data = new List<BoardValue>(RowsCount);
-                for (int c = 1; c <= ColumnsCount; c++)
-                    data.Add(GetValue(r, c));
-                var winner = Winner(data);
-                if (winner != BoardValue.Empty)
-                    return winner;
-            }
+                var val = GetValue(r, c);
+                if (val == BoardValue.Empty)
+                    continue;
 
-            //Check diagonals /
-            for (int rStart = SameForWin; rStart <= RowsCount + ColumnsCount; rStart++)
-            {
-                List<BoardValue> data = new List<BoardValue>(RowsCount);
-                for (int r = rStart; r >= 1; r--)
+                var columns = c + SameForWin - 1 <= ColumnsCount;
+                var rows = r + SameForWin - 1 <= RowsCount;
+
+                if (!columns && !rows)
+                    continue;
+
+                var forwardDiagonal = columns && rows;
+                var backwardDiagonal = rows && c - SameForWin + 1 >= 0;
+
+                for (var k = 1; k < SameForWin; k++)
                 {
-                    BoardValue foundVal;
-                    if (TryGetValue(r, rStart - r + 1, out foundVal))
-                        data.Add(foundVal);
+                    columns = columns && val == GetValue(r, c + k);
+                    rows = rows && val == GetValue(r + k, c);
+                    forwardDiagonal = forwardDiagonal && val == GetValue(r + k, c + k);
+                    backwardDiagonal = backwardDiagonal && val == GetValue(r + k, c - k);
+                    if (!columns && !rows && !forwardDiagonal && !backwardDiagonal)
+                        break;
                 }
 
-                var winner = Winner(data);
-                if (winner != BoardValue.Empty)
-                    return winner;
-            }
-
-            //Check diagonals \
-            for (int cStart = ColumnsCount - SameForWin + 1; cStart >= -RowsCount ; cStart--)
-            {
-                List<BoardValue> data = new List<BoardValue>(RowsCount);
-                for (int c = cStart; c <= ColumnsCount; c++)
-                {
-                    BoardValue foundVal;
-                    if (TryGetValue(c - cStart + 1, c, out foundVal))
-                        data.Add(foundVal);
-                }
-
-                var winner = Winner(data);
-                if (winner != BoardValue.Empty)
-                    return winner;
+                if (columns || rows || forwardDiagonal || backwardDiagonal)
+                    return val;
             }
 
             return BoardValue.Empty;
         }
 
-        private BoardValue Winner(List<BoardValue> p_Data)
+        public override string ToString()
         {
-            if (p_Data == null || !p_Data.Any())
-                return BoardValue.Empty;
-
-            BoardValue lastVal = p_Data[0];
-            int sameCount = lastVal != BoardValue.Empty ? 1 : 0;
-            for (int i = 1; i < p_Data.Count; i++)
+            StringBuilder sb = new StringBuilder();
+            for (int row = 1; row <= RowsCount; row++)
             {
-                if (lastVal != p_Data[i])
+                for (int col = 1; col <= ColumnsCount; col++)
                 {
-                    lastVal = p_Data[i];
-                    sameCount = lastVal != BoardValue.Empty ? 1 : 0;
-                }
-                else if (lastVal != BoardValue.Empty)
-                {
-                    sameCount++;
+                    var val = GetValue(row, col);
+                    if (val == BoardValue.Empty)
+                        sb.Append("o");
+                    else if (val == BoardValue.Red)
+                        sb.Append("R");
+                    else if (val == BoardValue.Yellow)
+                        sb.Append("Y");
+                    if (col < ColumnsCount)
+                        sb.Append("|");
                 }
 
-                if (sameCount == SameForWin)
-                    return lastVal;
+                sb.Append("||");
             }
 
-            return BoardValue.Empty;
+            return sb.ToString();
         }
     }
 }
