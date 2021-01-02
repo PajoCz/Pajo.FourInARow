@@ -119,14 +119,14 @@ namespace Pajo.FourInARow.Engine
                     continue;
 
                 var forwardDiagonal = columns && rows;
-                var backwardDiagonal = rows && c - SameForWin + 1 >= 0;
+                var backwardDiagonal = columns && r - SameForWin >= 0;
 
                 for (var k = 1; k < SameForWin; k++)
                 {
                     columns = columns && val == GetValue(r, c + k);
                     rows = rows && val == GetValue(r + k, c);
                     forwardDiagonal = forwardDiagonal && val == GetValue(r + k, c + k);
-                    backwardDiagonal = backwardDiagonal && val == GetValue(r + k, c - k);
+                    backwardDiagonal = backwardDiagonal && val == GetValue(r - k, c + k);
                     if (!columns && !rows && !forwardDiagonal && !backwardDiagonal)
                         break;
                 }
